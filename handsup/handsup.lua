@@ -10,57 +10,30 @@ local Keys = {
     ["NENTER"] = 201, ["N4"] = 108, ["N5"] = 60, ["N6"] = 107, ["N+"] = 96, ["N-"] = 97, ["N7"] = 117, ["N8"] = 61, ["N9"] = 118
   }
 
-local canHandsUp = true
-local GUI							= {}
-GUI.Time							= 0
+Citizen.CreateThread( function()
 
-AddEventHandler("handsup:toggle", function(param)
-	canHandsUp = param
-end)
-
-Citizen.CreateThread(function()
-	local handsup = false
 	while true do
-		Wait(0)
-		local lPed = GetPlayerPed(-1)
-		RequestAnimDict("random@mugging3")
-		if canHandsUp then
-			if (IsControlPressed(1, Keys['~']) and (GetGameTimer() - GUI.Time) > 150) then
-				if handsup then
-					if DoesEntityExist(lPed) then
-						Citizen.CreateThread(function()
-							RequestAnimDict("random@mugging3")
-							while not HasAnimDictLoaded("random@mugging3") do
-								Citizen.Wait(100)
-							end
-
-							if handsup then
-								handsup = false
-								ClearPedSecondaryTask(lPed)
-                                TriggerServerEvent("esx_thief:update", handsup)
-							end
-						end)
-					end
+		Citizen.Wait(5)
+		if (IsControlJustPressed(0,Keys["~"])) then
+			local player = PlayerPedId()
+	
+			if ( DoesEntityExist( player ) and not IsEntityDead( player ) ) then
+	
+				if IsEntityPlayingAnim(player, "random@mugging3", "handsup_standing_base", 3) then
+					ClearPedSecondaryTask(player)
 				else
-					if DoesEntityExist(lPed) then
-						Citizen.CreateThread(function()
-							RequestAnimDict("random@mugging3")
-							while not HasAnimDictLoaded("random@mugging3") do
-								Citizen.Wait(100)
-							end
-
-							if not handsup then
-								handsup = true
-								TaskPlayAnim(lPed, "random@mugging3", "handsup_standing_base", 8.0, -8, -1, 49, 0, 0, 0, 0)
-                                TriggerServerEvent("esx_thief:update", handsup)
-							end
-						end)
-					end
+					loadAnimDict( "random@mugging3" )
+					TaskPlayAnim(player, "random@mugging3", "handsup_standing_base", 2.0, 2.5, -1, 49, 0, 0, 0, 0 )
+					RemoveAnimDict("random@mugging3")
 				end
-				
-				GUI.Time  = GetGameTimer()
 			end
-
 		end
 	end
 end)
+
+function loadAnimDict(dict)
+	RequestAnimDict(dict)
+	while not HasAnimDictLoaded(dict) do
+		Citizen.Wait(500)
+	end
+end
